@@ -6,14 +6,14 @@ import numpy as np
 class Neuron(object):
 
     def __init__(self, weights, bias):
-        self.weights=weights
+        self.weights=np.array(weights)
         self.bias=bias
 
     def set_weights(self, weights):
         self.weights=weights
 
-    def get_weights(self):
-        return weights
+    def _get_weights(self):
+        return self.weights
 
     def _activation(self, input):
         return np.tanh(input)
