@@ -10,8 +10,7 @@ from Skynet.bin import Neuron
 class NeuronTests(unittest.TestCase):
 
     def setUp(self):
-        self.neuron=Neuron.Neuron(3,1)
-        
+        self.neuron=Neuron.Neuron(np.array([0.1,0.2,0.3]), 1.0)
 
     def test_activation(self):
         self.assertEqual(0, self.neuron._activation(0))

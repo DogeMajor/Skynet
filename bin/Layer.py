@@ -48,7 +48,7 @@ class Layer(object):
     def output(self, input):
         return self._activation(self._sum(input))
 
-'''
+
 layer=Layer(3,0)#Bias is zero in order to make checking matrix ops. easier
 layer._set_neurons()
 #print(layer.__dict__)
@@ -75,4 +75,3 @@ print(layer._get_weights())
 print(layer.neurons[2].weights)
 print(layer.output(np.array([0,0,1])))
 print(layer.derivative([0,0,1]))
-'''

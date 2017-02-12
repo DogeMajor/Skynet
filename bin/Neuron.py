@@ -6,7 +6,7 @@ import numpy as np
 class Neuron(object):
 
     def __init__(self, weights, bias):
-        self.weights=np.array(weights)
+        self.weights=(weights)
         self.bias=bias
 
     def set_weights(self, weights):
@@ -30,8 +30,7 @@ class Neuron(object):
     def _derivative(self, input): #Only works for tanh obv.
         return 1-self._activation(self._sum(input))**2
 
-'''
+
 neuron=Neuron(np.array([0.1,0.2,0.3,0.4]), 1)
 print(neuron._derivative([1,0,1,0]))
 print(neuron._sum([1,0,1,0]))
-'''
