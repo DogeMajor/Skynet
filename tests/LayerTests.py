@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append('../') #enables importing Neuron -module
+sys.path.append('../') #enables importing Layer -module
 
 import unittest
 import numpy as np
