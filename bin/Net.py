@@ -4,7 +4,12 @@ import time
 import random
 import scipy
 import numpy as np
+from numpy import linalg as la
 import Layer
+
+
+
+random.seed(time)
 
 class Net(object):
 
@@ -13,31 +18,48 @@ class Net(object):
         self.form=form #A vector giving the dimensions of the layers
         self.layers=[]
         self.bias=bias
-        self._set_layers()
+        self.__set_layers()
+        self._randomize_weights()
 
-    def _set_layers(self):
+    def __set_layers(self):
         for i in range(0, len(self.form)):
-            self.layers.append(Layer.Layer(self.form[i],self.bias))
+            self.layers.append(Layer.Layer(self.form[i],self.bias, []))
 
     def set_weights(self, weights):
         for i in range(0,len(weights)):
             self.layers[i].set_weights(weights[i])
-        #Every Matrix of this tensor corresponds to the weights of a specific layer!
+        #Every Matrix of the tensor weights corresponds to the weights of a specific layer!
 
     def _randomize_weights(self):
-        return "Not OK!!!!"
+        prevlayer=self.form[0]
+        temp_matrix=[]
+        temp_list=[]
+
+        for layer_index in range(0,len(self.form)):
+            for row in range(0,self.form[layer_index]):
+                for column in range(0, prevlayer):
+                    temp_list.append(random.uniform(-1,1))
+                temp_matrix.append(temp_list)
+                temp_list=[]
+            self.layers[layer_index].set_weights(np.array(temp_matrix))
+            temp_matrix=[]
+            prevlayer=self.form[layer_index]
+        #OK... I don't know how to make this any shorter, sorry guys
+        #Randomizes weights uniformally in [-1,1]
 
     def _get_weights(self):
         result=[]
         for item in self.layers:
             result.append(item._get_weights())
         return np.array(result)
+        #OK
 
     def derivative(self, input):
         result=[]
-        for item in self.layers:
-            result.append(item._derivative(input))
-        return result
+        for k in range(0, len(self.form)):
+            result.append(list(self.layers[k].derivative(self.kth_sum(input,k))))
+        return np.array(result)
+        #OK
 
     def output(self, input):
         result=input
@@ -45,24 +67,82 @@ class Net(object):
             result=item.output(result)
             #print(result)
         return result
+        #OK
 
-
-'''
-    def _sum(self, input):
-        sum=[]
-        for item in self.neurons:
-            sum.append(item._sum(input))
-        return sum
-
-    def _activation(self, input):
-        result=[]
-        for i in range(0,self.length):
-            result.append(self.neurons[i]._activation(input[i]))
+    def kth_output(self, input, k):
+        result=input
+        for i in range(0, k+1):
+            result=self.layers[i].output(result)
         return result
+        #OK
+
+    def kth_sum(self, input, k):
+        #result=input
+        if k==-1:
+            return input
+        else:
+            temp=self.kth_output(input, k-1)
+            return self.layers[k]._sum(temp)
+        #OK
+
+    #Learning capabilities
+
+    def error(self, input, dao_output):
+        return la.norm(self.output(input)-dao_output)
+
+
+    def _delta(self, k, row, input, dao_output):
+        result=0.0
+        derivative=self.derivative(input)
+        output=self.output(input)
+        if k==len(self.form)-1:
+            result = (output[row]-dao_output[row])*derivative[k][row]
+            return result
+        else:
+            for l in range(0, self.form[k+1]):
+                result+=self.layers[k+1].weights[l][row]*derivative[k][row]*self._delta(k+1,l, input, dao_output)
+            return result
+        #OK, although some intermediate outputs are calculated any times I think
+
+    def weights_derivative(self, k, row, column, input, dao_output):
+        return self._delta(k, row, input, dao_output)*self.kth_sum(input, k-1)[column]
+
+    def weights_derivatives(self, input, dao_output):
+        prev_layer=self.form[0]
+        result=[]
+        matrix=[]
+        temp_list=[]
+        for k in range(0,len(self.form)):
+            for row in range(0,self.form[k]):
+                for column in range(0, prev_layer):
+                    temp_list.append(self.weights_derivative(k,row,column,input, dao_output))
+                #print(temp_list)
+                matrix.append(np.array(temp_list))
+                temp_list=[]
+
+            print(matrix)
+            result.append(np.array((matrix)))
+            matrix=[]
+            prev_layer=self.form[k]
+        return np.array(result)
+
+    def back_propagation(self):
+        return "Oh no!"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 '''
-
-
-
 net=Net([3,3],0)
 
 A=np.array([[[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]],
@@ -72,12 +152,70 @@ net.set_weights(A)
 #net.layers[1].set_weights(A[1])
 print(net.output(np.array([1,1,1])))
 #print(A[0][:][:])
+'''
+netb=Net([3,2],1)
 
-netb=Net([3,2],0)
-print(([3,2])[1])
 B=np.array([[[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]],
 [[-.1,-.2,-.3],[-.4,-.5,-.6]]])
 netb.set_weights(B)
+'''
+#print(netb.get_weights())
+#print(netb.layers[0].get_weights())
+#print(netb.layers[1].get_weights())
 #net.layers[0].set_weights(A[0])
 #net.layers[1].set_weights(A[1])
+#print(netb.output(np.array([1,1,1])))
+#print(netb.derivative(np.array([1,1,1])))
+#netb._randomize_weights()
+print(netb.kth_output(np.array([1,1,1]),0))
+#print(netb.kth_output(np.array([1,1,1]),1))
+print(netb.kth_sum(np.array([1,1,1]),0))
+#print(netb.kth_sum(np.array([1,1,1]),1))
+
+
+
+
+
+#print(netb._get_weights())
+#print(netb.layers[1]._get_weights())
+'''
+'''
 print(netb.output(np.array([1,1,1])))
+print(netb.kth_output(np.array([1,1,1]),0))
+print(netb.kth_output(np.array([1,1,1]),1))
+print(netb.kth_sum(np.array([1,1,1]),0))
+print(netb.kth_sum(np.array([1,1,1]),1))
+print(netb.derivative(np.array([1,1,1])))
+print(netb.error(np.array([1,1,1]),[0.5,0.5])**2)
+print(netb._delta(1, 0, np.array([1,1,1]), np.array([0.5,0.5])))
+print(netb._delta(1, 1, np.array([1,1,1]), np.array([0.5,0.5])))
+print(netb._delta(0, 0, np.array([1,1,1]), np.array([0.5,0.5])))
+print(netb._delta(0, 1, np.array([1,1,1]), np.array([0.5,0.5])))
+'''
+print(netb.weights_derivative(1,0,0,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(1,1,0,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(1,0,1,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(1,1,1,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(1,0,2,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(1,1,2,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(0,0,0,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(0,1,1,np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.weights_derivative(0,2,2,np.array([1,2,3]), np.array([0.5,0.5])))
+#print(netb.weights_derivative(1,2,1,np.array([1,1,1]), np.array([0.5,0.5])))
+#print(netb.weights_derivative(1,0,1,np.array([1,1,1]), np.array([0.5,0.5])))
+#print(netb.weights_derivative(1,1,1,np.array([1,1,1]), np.array([0.5,0.5])))
+print(netb.weights_derivatives(np.array([1,2,3]), np.array([0.5,0.5])))
+print(netb.kth_output(np.array([1,2,3]),0))
+print(netb.kth_output(np.array([1,2,3]),1))
+'''
+print(netb.kth_sum(np.array([1,1,1]),-1))
+print(netb.kth_sum(np.array([1,1,1]),0))
+print(netb.kth_sum(np.array([1,1,1]),1))
+#print(netb.weights_derivatives(np.array([1,1,1]), np.array([0.5,0.5])))
+#netb._randomize_weights()
+#print(netb.layers[0].get_weights())
+#print(netb.layers[1].get_weights())
+print(netb.kth_output(np.array([1,1,1]),-1))
+print(netb.kth_output(np.array([1,1,1]),0))
+print(netb.kth_output(np.array([1,1,1]),1))
+'''
