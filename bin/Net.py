@@ -7,8 +7,6 @@ import numpy as np
 from numpy import linalg as la
 import Layer
 import DAO
-
-
 random.seed(time)
 
 class Net(object):
@@ -65,7 +63,6 @@ class Net(object):
         result=input
         for item in self.layers:
             result=item.output(result)
-            #print(result)
         return result
         #OK
 
@@ -77,7 +74,6 @@ class Net(object):
         #OK
 
     def kth_sum(self, input, k):
-        #result=input
         if k==-1:
             return input
         else:
@@ -85,11 +81,8 @@ class Net(object):
             return self.layers[k]._sum(temp)
         #OK
 
-    #Learning capabilities
-
     def error(self, input, dao_output):
         return 0.5*la.norm(self.output(input)-dao_output)
-
 
     def _delta(self, k, row, input, dao_output):
         result=0.0
@@ -102,7 +95,7 @@ class Net(object):
             for l in range(0, self.form[k+1]):
                 result+=self.layers[k+1].weights[l][row]*derivative[k][row]*self._delta(k+1,l, input, dao_output)
             return result
-        #OK, although some intermediate outputs are calculated any times I think
+        #OK, allthough some intermediate outputs are calculated many times I think
 
     def weights_derivative(self, k, row, column, input, dao_output):
         return self._delta(k, row, input, dao_output)*self.kth_sum(input, k-1)[column]
@@ -116,15 +109,14 @@ class Net(object):
             for row in range(0,self.form[k]):
                 for column in range(0, prev_layer):
                     temp_list.append(self.weights_derivative(k,row,column,input, dao_output))
-                #print(temp_list)
                 matrix.append(np.array(temp_list))
                 temp_list=[]
-
-            #print(matrix)
             result.append(np.array(matrix))
             matrix=[]
             prev_layer=self.form[k]
         return np.array(result)
+        #OK
+
 
     def _stochastic_derivative(self):
         derivatives=self.weights_derivatives(self.dao.data[0][0],self.dao.data[0][1])*0
@@ -143,14 +135,13 @@ class Net(object):
     def back_propagation(self,learning):
         derivatives=self._stochastic_derivative()
         error=self._stochastic_error()
-        #print(error)
         for k in range(0,len(self.form)):
             matrix=self.layers[k]._get_weights()
             matrix=np.add(matrix, -learning*derivatives[k])
             self.layers[k].set_weights(matrix)
-
             derivatives=self._stochastic_derivative()
             error=self._stochastic_error()
+        #OK
 
     def learn_by_back_propagation(self, cycles,learning):
         for i in range(cycles):
@@ -160,12 +151,12 @@ class Net(object):
         weights=[]
         error=0
         for i in range(cycles):
-            #print(error)
             weights=self._get_weights()
             error=self._stochastic_error()
             self._randomize_weights()
             if error<self._stochastic_error():
                 self.set_weights(weights)
+        #OK
 
     def learn_by_exponential_back_propagation(self, cycles,learning, exponent):
         for i in range(cycles):
@@ -175,95 +166,11 @@ class Net(object):
         for i in range(cycles):
             self.back_propagation(learning)
             self.learn_by_randomisation(1)
+        #OK
 
 
 
 
-
-
-        #print(error,np.array(derivatives),"Oh no!")
-
-'''
-net=Net([3,3],0)
-
-A=np.array([[[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]],
-[[-.1,-.2,-.3],[-.4,-.5,-.6],[-.7,-.8,-.9]]])
-net.set_weights(A)
-#net.layers[0].set_weights(A[0])
-#net.layers[1].set_weights(A[1])
-print(net.output(np.array([1,1,1])))
-#print(A[0][:][:])
-'''
-#netb=Net([3,2],1)
-
-#B=np.array([[[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]],[[-.1,-.2,-.3],[-.4,-.5,-.6]]])
-#netb.set_weights(B)
-#print(netb._get_weights())
-'''
-
-#print(netb.layers[0].get_weights())
-#print(netb.layers[1].get_weights())
-#net.layers[0].set_weights(A[0])
-#net.layers[1].set_weights(A[1])
-#print(netb.output(np.array([1,1,1])))
-#print(netb.derivative(np.array([1,1,1])))
-#netb._randomize_weights()
-print(netb.kth_output(np.array([1,1,1]),0))
-#print(netb.kth_output(np.array([1,1,1]),1))
-print(netb.kth_sum(np.array([1,1,1]),0))
-#print(netb.kth_sum(np.array([1,1,1]),1))
-
-
-
-
-
-#print(netb._get_weights())
-#print(netb.layers[1]._get_weights())
-'''
-'''
-print(netb.output(np.array([1,1,1])))
-print(netb.kth_output(np.array([1,1,1]),0))
-print(netb.kth_output(np.array([1,1,1]),1))
-print(netb.kth_sum(np.array([1,1,1]),0))
-print(netb.kth_sum(np.array([1,1,1]),1))
-print(netb.derivative(np.array([1,1,1])))
-print(netb.error(np.array([1,1,1]),[0.5,0.5])**2)
-print(netb._delta(1, 0, np.array([1,1,1]), np.array([0.5,0.5])))
-print(netb._delta(1, 1, np.array([1,1,1]), np.array([0.5,0.5])))
-print(netb._delta(0, 0, np.array([1,1,1]), np.array([0.5,0.5])))
-print(netb._delta(0, 1, np.array([1,1,1]), np.array([0.5,0.5])))
-'''
-'''
-print(netb.weights_derivative(1,0,0,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(1,1,0,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(1,0,1,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(1,1,1,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(1,0,2,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(1,1,2,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(0,0,0,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(0,1,1,np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.weights_derivative(0,2,2,np.array([1,2,3]), np.array([0.5,0.5])))
-#print(netb.weights_derivative(1,2,1,np.array([1,1,1]), np.array([0.5,0.5])))
-#print(netb.weights_derivative(1,0,1,np.array([1,1,1]), np.array([0.5,0.5])))
-#print(netb.weights_derivative(1,1,1,np.array([1,1,1]), np.array([0.5,0.5])))
-print(netb.weights_derivatives(np.array([1,2,3]), np.array([0.5,0.5])))
-print(netb.kth_output(np.array([1,2,3]),0))
-print(netb.kth_output(np.array([1,2,3]),1))
-'''
-'''
-print(netb.kth_sum(np.array([1,1,1]),-1))
-print(netb.kth_sum(np.array([1,1,1]),0))
-print(netb.kth_sum(np.array([1,1,1]),1))
-'''
-#print(netb.weights_derivatives(np.array([1,1,1]), np.array([0.5,0.5])))
-'''
-#netb._randomize_weights()
-#print(netb.layers[0].get_weights())
-#print(netb.layers[1].get_weights())
-print(netb.kth_output(np.array([1,1,1]),-1))
-print(netb.kth_output(np.array([1,1,1]),0))
-print(netb.kth_output(np.array([1,1,1]),1))
-'''
 netA=Net([2,1],0)
 
 #netA.set_weights(np.array([[[0.1,0.2],[0.3,0.4]],[[0.5,0.6]]]))
@@ -307,20 +214,6 @@ print(netA.output(np.array([1,1])))
 print(netA._stochastic_error())
 
 netA.learn_by_exponential_back_propagation(200,2,-0.001)
-print(netA._stochastic_error())
-netA.learn_by_randomisation(100)
-print(netA._stochastic_error())
-netA.learn_by_exponential_back_propagation(200,2,-0.001)
-print(netA._stochastic_error())
-netA.learn_by_randomisation(100)
-print(netA._stochastic_error())
-netA.learn_by_exponential_back_propagation(200,2,-0.001)
-print(netA._stochastic_error())
-netA.learn_by_randomisation(100)
-print(netA._stochastic_error())
-netA.learn_by_exponential_back_propagation(200,2,-0.001)
-print(netA._stochastic_error())
-netA.learn_by_randomisation(100)
 print(netA._stochastic_error())
 '''
 '''

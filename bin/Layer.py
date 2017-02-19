@@ -2,7 +2,7 @@
 
 import scipy
 import numpy as np
-import Neuron  #Not needed!!!!
+
 #Every ROW of the matrix corresponds to the weights of the specific neuron!
 
 class Layer(object):
