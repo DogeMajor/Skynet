@@ -16,7 +16,7 @@ class Layer(object):
         self.weights=np.array(weights)
         #Every ROW of the matrix corresponds to the weights of the specific neuron!
 
-    def get_weights(self):
+    def _get_weights(self):
         return self.weights
 
     def _sum(self, input):
@@ -27,24 +27,24 @@ class Layer(object):
     def _activation(self, sum):
         result=[]
         for i in range(0, self.length):
-            result.append(np.tanh(sum[i]))
+            result.append(1.0/(1.0+np.exp(-sum[i])))
         return np.array(result)
 
     def derivative(self, sum):
         result=[]
         #print('#neurons: ', len(self.weights))
         for i in range(0, self.length):
-            result.append(1-np.tanh(sum[i])**2)
+            result.append(np.exp(sum[i])/(1.0+np.exp(sum[i]))**2)
         return np.array(result)
 
     def output(self, input):
         return self._activation(self._sum(input))
 
 
-layer=Layer(3,0,[])#Bias is zero in order to make checking matrix ops. easier
+#layer=Layer(3,0,[])#Bias is zero in order to make checking matrix ops. easier
 
 
-layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
+#layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
 
 '''
 print(layer._sum(np.array([0,0,1])))
