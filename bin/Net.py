@@ -11,44 +11,60 @@ random.seed(time)
 
 class Net(object):
 
-    def __init__(self, form, bias):
+    def __init__(self, form):
         self.dao=DAO.DAO() #To be added
         self.form=form #A vector giving the dimensions of the layers
         self.layers=[]
-        self.bias=bias
         self.__set_layers()
-        self._randomize_weights()
+        self._randomize()
 
     def __set_layers(self):
-        for i in range(0, len(self.form)):
-            self.layers.append(Layer.Layer(self.form[i],self.bias, []))
+        last_layer=len(self.form)-1
+        for i in range(0, last_layer):
+            self.layers.append(Layer.Layer(self.form[i],[], []))
+        self.layers.append(Layer.Layer(self.form[last_layer],[], []))
 
     def set_weights(self, weights):
         for i in range(0,len(weights)):
             self.layers[i].set_weights(weights[i])
         #Every Matrix of the tensor weights corresponds to the weights of a specific layer!
 
-    def _randomize_weights(self):
+    def set_biases(self, biases):
+        for i in range(0,len(biases)):
+            self.layers[i].set_weights(biases[i])
+
+    def _randomize(self):
         prevlayer=self.form[0]
         temp_matrix=[]
         temp_list=[]
+        biases=[]
 
         for layer_index in range(0,len(self.form)):
             for row in range(0,self.form[layer_index]):
                 for column in range(0, prevlayer):
-                    temp_list.append(random.uniform(-1,1))
+                    temp_list.append(random.uniform(-2,2))
                 temp_matrix.append(temp_list)
+                biases.append(random.uniform(-2,2))
                 temp_list=[]
             self.layers[layer_index].set_weights(np.array(temp_matrix))
+            self.layers[layer_index].set_biases(np.array(biases))
             temp_matrix=[]
+            biases=[]
             prevlayer=self.form[layer_index]
         #OK... I don't know how to make this any shorter, sorry guys
-        #Randomizes weights uniformally in [-1,1]
+        #Randomizes weights uniformally in [-2,2]
 
     def _get_weights(self):
         result=[]
         for item in self.layers:
             result.append(item._get_weights())
+        return np.array(result)
+        #OK
+
+    def _get_biases(self):
+        result=[]
+        for item in self.layers:
+            result.append(item._get_biases())
         return np.array(result)
         #OK
 
@@ -83,6 +99,7 @@ class Net(object):
 
     def error(self, input, dao_output):
         return 0.5*la.norm(self.output(input)-dao_output)
+        #OK
 
     def _delta(self, k, row, input, dao_output):
         result=0.0
@@ -97,32 +114,21 @@ class Net(object):
             return result
         #OK, allthough some intermediate outputs are calculated many times I think
 
+    def _stochastic_delta(self, k, row):
+        delta=0
+        for item in self.dao.data:
+            delta+=self._delta(k,row,item[0],item[1])
+        return delta/self.dao.size
+        #OK
+
     def weights_derivative(self, k, row, column, input, dao_output):
         return self._delta(k, row, input, dao_output)*self.kth_sum(input, k-1)[column]
 
-    def weights_derivatives(self, input, dao_output):
-        prev_layer=self.form[0]
-        result=[]
-        matrix=[]
-        temp_list=[]
-        for k in range(0,len(self.form)):
-            for row in range(0,self.form[k]):
-                for column in range(0, prev_layer):
-                    temp_list.append(self.weights_derivative(k,row,column,input, dao_output))
-                matrix.append(np.array(temp_list))
-                temp_list=[]
-            result.append(np.array(matrix))
-            matrix=[]
-            prev_layer=self.form[k]
-        return np.array(result)
-        #OK
-
-
-    def _stochastic_derivative(self):
-        derivatives=self.weights_derivatives(self.dao.data[0][0],self.dao.data[0][1])*0
+    def _stochastic_derivative(self, k, row, column):
+        derivative=0
         for item in self.dao.data:
-            derivatives=np.add(derivatives,self.weights_derivatives(item[0],item[1]))
-        return derivatives/self.dao.size
+            derivative+=self.weights_derivative(k,row,column,item[0],item[1])
+        return derivative/self.dao.size
         #OK
 
     def _stochastic_error(self):
@@ -132,20 +138,46 @@ class Net(object):
         return error/self.dao.size
         #OK
 
-    def back_propagation(self,learning):
-        derivatives=self._stochastic_derivative()
-        error=self._stochastic_error()
-        for k in range(0,len(self.form)):
-            matrix=self.layers[k]._get_weights()
-            matrix=np.add(matrix, -learning*derivatives[k])
-            self.layers[k].set_weights(matrix)
-            derivatives=self._stochastic_derivative()
-            error=self._stochastic_error()
-        #OK
+    def back_propagation(self,learning,old_weights,old_biases):
+        momentum=learning/5.0   #Tunable
+        weight=change=0.0
+        prev_layer=self.form[len(self.form)-2]
+        for k in range(len(self.form)-1,-1,-1):
+            if k!=0:
+                prev_layer=self.form[k-1]
+            for row in range(0, self.form[k]):
+                for column in range(0, prev_layer):
+                    weight=self.layers[k].weights[row][column]
+                    change=learning*self._stochastic_derivative(k, row, column)
+                    if abs(weight-change)<10:
+                        self.layers[k].weights[row][column]-=change*(1-momentum)+(weight-old_weights[k][row][column])*momentum
+                bias=self.layers[k].biases[row]
+                change=learning*self._stochastic_delta(k, row)
+                if abs(bias-change)<10:
+                    self.layers[k].biases[row]-=change*(1-momentum)+(bias-old_biases[k][row])*momentum
+        #OK #Momentum added!!!
 
-    def learn_by_back_propagation(self, cycles,learning):
+    def learn_by_back_propagation(self, cycles, learning):
+        #old_weights=self._get_weights()
+        error=self._stochastic_error()
+        error_progress=[]
+        force_rand=0
         for i in range(cycles):
-            self.back_propagation(learning)
+            old_weights=self._get_weights()
+            old_biases=self._get_biases()
+            self.back_propagation(learning, old_weights, old_biases)
+            if i %30==0 and i!=0:
+                error_change=self._stochastic_error()-error
+                print(error)
+                print(error_change)
+                if error_change>0.05:
+                    self._randomize()
+                #elif abs(error_change)<0.001:
+                #    learning*=0.75
+                error_progress.append(error_change)
+                print(learning)
+                error=self._stochastic_error()
+        #OK  Randomizes weights whenever error is not converging to 0
 
     def learn_by_randomisation(self, cycles):
         weights=[]
@@ -153,7 +185,7 @@ class Net(object):
         for i in range(cycles):
             weights=self._get_weights()
             error=self._stochastic_error()
-            self._randomize_weights()
+            self._randomize()
             if error<self._stochastic_error():
                 self.set_weights(weights)
         #OK
@@ -168,18 +200,10 @@ class Net(object):
             self.learn_by_randomisation(1)
         #OK
 
+netA=Net([2,5,1])
+input=[1,0]
+dao_output=[1]
 
-
-
-netA=Net([2,1],0)
-
-#netA.set_weights(np.array([[[0.1,0.2],[0.3,0.4]],[[0.5,0.6]]]))
-#print(netA._get_weights())
-#print(netA.weights_derivatives([1,1], [0]))
-#print(netA.kth_output(np.array([1,1]),0))
-#print(netA.kth_output(np.array([1,1]),1))
-
-#print(type(netA._get_weights()))
 '''
 print(netA._stochastic_error())
 netA.learn_by_back_propagation(100,0.5)
@@ -197,19 +221,44 @@ for i in range(10):
     #netA.set_weights(np.array([[[0.1,0.2],[0.3,0.4]],[[0.5,0.6]]]))
     netA.learn_by_back_propagation(100,learning)
     print(netA._stochastic_error())
-'''
-print(netA.output(np.array([0,0])))
-print(netA.output(np.array([0,1])))
-print(netA.output(np.array([1,0])))
-print(netA.output(np.array([1,1])))
-print(netA._stochastic_error())
-netA.learn_by_back_propagation(1000,.3)
 
-print(netA._stochastic_error())
+B=np.array([[[-8.69899859, -9.88685292],[ 8.37943205, -8.57870461]],[[-9.56749478,2.12896463],[4.61960524,5.14759242]],[[ 7.83274341, -8.00756242]]])
+
+netA.set_weights(B)
+'''
+#C=np.array([[[0.94070597,0.93761745],[-1.02608829, -1.86169371]],[[4.57657845, 0.49799085],[4.44945028,-3.57209561]],[[-1.02338944,1.02579393]]])
+#netA.set_weights(C)
+
+print(netA._get_weights())
+#netA.learn_by_randomisation(50)
+for i in range(1):
+    #print(netA._get_weights())
+
+    #netA._randomize()
+    print(netA._stochastic_error())
+
+    #print(netA.output(np.array([0,0])))
+    #print(netA.output(np.array([0,1])))
+    #print(netA.output(np.array([1,0])))
+    #print(netA.output(np.array([1,1])))
+    #print(netA._stochastic_error())
+    W=netA._get_weights()
+    netA.learn_by_back_propagation(500,0.4)
+    #netA.learn_by_back_propagation(100,0.9*np.exp(-i*0.05))
+    #print(netA._stochastic_error())
+
+
+    #print(netA._stochastic_error())
+    #print(netA._get_weights())
 print(netA.output(np.array([0,0])))
 print(netA.output(np.array([0,1])))
 print(netA.output(np.array([1,0])))
 print(netA.output(np.array([1,1])))
+#print(netA._stochastic_derivatives())
+#print(netA._stochastic_derivative(1,0,0))
+print(netA._get_weights())
+print(netA._get_biases())
+
 '''
 print(netA._stochastic_error())
 
