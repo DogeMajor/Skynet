@@ -44,10 +44,14 @@ class Net(object):
                 for column in range(0, prevlayer):
                     temp_list.append(random.uniform(-2,2))
                 temp_matrix.append(temp_list)
-                biases.append(random.uniform(-2,2))
+                if(layer_index!=len(self.form)-1):
+                    biases.append(random.uniform(-2,2))
                 temp_list=[]
             self.layers[layer_index].set_weights(np.array(temp_matrix))
-            self.layers[layer_index].set_biases(np.array(biases))
+            if(layer_index!=len(self.form)-1):
+                self.layers[layer_index].set_biases(np.array(biases))
+            else:
+                self.layers[layer_index].set_biases(np.zeros(self.form[layer_index]))
             temp_matrix=[]
             biases=[]
             prevlayer=self.form[layer_index]
@@ -153,7 +157,7 @@ class Net(object):
                         self.layers[k].weights[row][column]-=change*(1-momentum)+(weight-old_weights[k][row][column])*momentum
                 bias=self.layers[k].biases[row]
                 change=learning*self._stochastic_delta(k, row)
-                if abs(bias-change)<10:
+                if abs(bias-change)<10 and k!=len(self.form)-1:
                     self.layers[k].biases[row]-=change*(1-momentum)+(bias-old_biases[k][row])*momentum
         #OK #Momentum added!!!
 

@@ -13,14 +13,12 @@ net_weights=np.array([[[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]],
 [[-.1,-.2,-.3],[-.4,-.5,-.6]]])
 net_biases=np.array([[1.1,1.2,1.3],[-1.4,-1.5]])
 
-
 class NetTests(unittest.TestCase):
 
     def setUp(self):
         self.net=Net.Net(net_form)
         self.net.set_weights(net_weights)
         self.net.set_biases(0*net_biases)
-
 
     def test_output(self):
         self.assertAlmostEqual([-0.48525653219380138, -0.85040078770263161],
