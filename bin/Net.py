@@ -206,7 +206,7 @@ class Net(object):
 
 if __name__=='__main__':
 
-    netA=Net([2,5,1])
+    netA=Net([3,3])
     input=[1,0]
     dao_output=[1]
 

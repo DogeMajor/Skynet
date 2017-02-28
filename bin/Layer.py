@@ -25,8 +25,8 @@ class Layer(object):
     def _get_biases(self):
         return self.biases
 
-    def _sum(self, input):
-        sum=np.dot(self.weights, input) #Soooo much easier than dealing with neurons
+    def _sum(self, input_):
+        sum=np.dot(self.weights, input_) #Soooo much easier than dealing with neurons
         sum=np.add(sum,self.biases)
         return sum
 
@@ -44,42 +44,43 @@ class Layer(object):
             #result.append(np.exp(sum[i])/(1.0+np.exp(sum[i]))**2)
         return np.array(result)
 
-    def output(self, input):
-        return self._activation(self._sum(input))
+    def output(self, input_):
+        return self._activation(self._sum(input_))
 
-'''
-layer=Layer(3,[0,0,0],[])#Bias is zero in order to make checking matrix ops. easier
-
-
-layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
+if __name__=='__main__':
+    '''
+    layer=Layer(3,[0,0,0],[])#Bias is zero in order to make checking matrix ops. easier
 
 
-print(layer._sum(np.array([0,0,1])))
-
-print(np.array(layer.output(np.array([0,0,1]))))
-
-print(layer._activation(layer._sum(np.array([0,0,1]))))
-print(layer.derivative(layer._sum(np.array([0,0,1]))))
-print(layer._activation(layer._sum(np.array([0,0,1]))))
-print(layer.derivative(layer._sum([0,0,1])))
+    layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
 
 
+    print(layer._sum(np.array([0,0,1])))
 
-A=np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
-B=np.array([1,0,0])
-print(np.dot(A,B))
-print(A)
+    print(np.array(layer.output(np.array([0,0,1]))))
 
-print(layer.get_weights())
+    print(layer._activation(layer._sum(np.array([0,0,1]))))
+    print(layer.derivative(layer._sum(np.array([0,0,1]))))
+    print(layer._activation(layer._sum(np.array([0,0,1]))))
+    print(layer.derivative(layer._sum([0,0,1])))
 
-print(layer.output(np.array([0,0,1])))
 
-print(layer._sum(np.array([1,1,1])))
 
-print(np.array(layer.output(np.array([1,1,1]))))
+    A=np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
+    B=np.array([1,0,0])
+    print(np.dot(A,B))
+    print(A)
 
-print(layer._activation(layer._sum(np.array([1,1,1]))))
-print(layer.derivative(layer._sum(np.array([1,1,1]))))
+    print(layer.get_weights())
 
-print(layer.derivative(layer._sum([1,1,1])))
-'''
+    print(layer.output(np.array([0,0,1])))
+
+    print(layer._sum(np.array([1,1,1])))
+
+    print(np.array(layer.output(np.array([1,1,1]))))
+
+    print(layer._activation(layer._sum(np.array([1,1,1]))))
+    print(layer.derivative(layer._sum(np.array([1,1,1]))))
+
+    print(layer.derivative(layer._sum([1,1,1])))
+    '''
