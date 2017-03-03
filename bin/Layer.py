@@ -26,22 +26,22 @@ class Layer(object):
         return self.biases
 
     def _sum(self, input_):
-        sum=np.dot(self.weights, input_) #Soooo much easier than dealing with neurons
-        sum=np.add(sum,self.biases)
-        return sum
+        sum_ = np.dot(self.weights, input_) #Soooo much easier than dealing with neurons
+        sum_ = np.add(sum_,self.biases)
+        return sum_
 
-    def _activation(self, sum):
-        result=[]
+    def _activation(self, sum_):
+        result = []
         for i in range(0, self.length):
-            result.append(np.tanh(sum[i]))
-            #result.append(1.0/(1.0+np.exp(-sum[i])))
+            result.append(np.tanh(sum_[i]))
+            #result.append(1.0/(1.0+np.exp(-sum_[i])))
         return np.array(result)
 
-    def derivative(self, sum):
-        result=[]
+    def derivative(self, sum_):
+        result = []
         for i in range(0, self.length):
-            result.append(1-(np.tanh(sum[i]))**2)
-            #result.append(np.exp(sum[i])/(1.0+np.exp(sum[i]))**2)
+            result.append(1-(np.tanh(sum_[i]))**2)
+            #result.append(np.exp(sum_[i])/(1.0+np.exp(sum_[i]))**2)
         return np.array(result)
 
     def output(self, input_):

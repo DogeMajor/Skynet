@@ -90,3 +90,6 @@ ENV/
 
 # Open data key file
 opendatakey.txt
+
+# Data
+data/

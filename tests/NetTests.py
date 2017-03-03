@@ -6,6 +6,7 @@ sys.path.append('../') #enables importing the Net -module
 import unittest
 import numpy as np
 from Skynet.bin import Net
+from Skynet.bin.DAO import DAO as xorDAO
 
 #test_data
 net_form=[3,2]
@@ -16,7 +17,8 @@ net_biases=np.array([[1.1,1.2,1.3],[-1.4,-1.5]])
 class NetTests(unittest.TestCase):
 
     def setUp(self):
-        self.net=Net.Net(net_form)
+        data = xorDAO()
+        self.net=Net.Net(net_form, data)
         self.net.set_weights(net_weights)
         self.net.set_biases(0*net_biases)
 

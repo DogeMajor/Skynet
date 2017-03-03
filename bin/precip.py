@@ -6,7 +6,7 @@ import requests
 with open('../opendatakey.txt') as keyfile:
 	apikey = keyfile.read().rstrip()
 
-datetimes = pd.date_range('2017-02-25', '2017-02-28', freq='5min')
+datetimes = pd.date_range('2017-02-28', '2017-03-01', freq='5min')
 
 for dtime in datetimes:
 

@@ -6,58 +6,85 @@ import scipy
 import numpy as np
 from numpy import linalg as la
 import Layer
-import DAO
-random.seed(time)
+from DAO import DAO
+np.random.seed(123)
 
 class Net(object):
 
-    def __init__(self, form):
-        self.dao=DAO.DAO() #To be added
+    def __init__(self, form, data):
+        self.dao = data
         self.form=form #A vector giving the dimensions of the layers
         self.layers=[]
         self.__set_layers()
         self._randomize()
 
+    @property
+    def depth(self):
+        return len(self.form)
+
     def __set_layers(self):
-        last_layer=len(self.form)-1
-        for i in range(0, last_layer):
+        last_layer=self.depth-1
+        for i in range(last_layer):
             self.layers.append(Layer.Layer(self.form[i],[], []))
         self.layers.append(Layer.Layer(self.form[last_layer],[], []))
 
     def set_weights(self, weights):
-        for i in range(0,len(weights)):
-            self.layers[i].set_weights(weights[i])
+        for layer, weight in zip(self.layers, weights):
+            layer.set_weights(weight)
         #Every Matrix of the tensor weights corresponds to the weights of a specific layer!
 
     def set_biases(self, biases):
-        for i in range(0,len(biases)):
-            self.layers[i].set_weights(biases[i])
+        for layer, biasvec in zip(self.layers, biases):
+            layer.set_weights(biasvec)
 
     def _randomize(self):
+        # fancy iterating
+        for i, (layer, size) in enumerate(zip(self.layers, self.form)):
+            # weights
+            # I'm not actually sure if this is what you had in mind.
+            # The old randomize-function uses the first layer shape twice.
+            prevsize = self.form[i-1] if i>0 else self.dao.input_size
+            layer.set_weights(np.random.uniform(-2, 2, (size, prevsize)))
+            # biases
+            not_output_layer = i != self.depth-1
+            bias = np.random.uniform(-2, 2, size) if not_output_layer else np.zeros(size)
+            layer.set_biases(bias)
+
+    def _randomize_old(self):
         prevlayer=self.form[0]
         temp_matrix=[]
         temp_list=[]
         biases=[]
 
-        for layer_index in range(0,len(self.form)):
-            for row in range(0,self.form[layer_index]):
-                for column in range(0, prevlayer):
+        for idx, layer in enumerate(self.layers):
+            for row in range(self.form[idx]):
+                for column in range(prevlayer):
                     temp_list.append(random.uniform(-2,2))
                 temp_matrix.append(temp_list)
-                if(layer_index!=len(self.form)-1):
+                if(idx!=self.depth-1):
                     biases.append(random.uniform(-2,2))
                 temp_list=[]
-            self.layers[layer_index].set_weights(np.array(temp_matrix))
-            if(layer_index!=len(self.form)-1):
-                self.layers[layer_index].set_biases(np.array(biases))
+            layer.set_weights(np.array(temp_matrix))
+            if(idx!=self.depth-1):
+                layer.set_biases(np.array(biases))
             else:
-                self.layers[layer_index].set_biases(np.zeros(self.form[layer_index]))
+                layer.set_biases(np.zeros(self.form[idx]))
             temp_matrix=[]
             biases=[]
-            prevlayer=self.form[layer_index]
+            prevlayer=self.form[idx]
         #OK... I don't know how to make this any shorter, sorry guys
         #Randomizes weights uniformally in [-2,2]
 
+    # You could do this with
+    # return np.array([layer.weights for layer in self.layers])
+    # but it's unnecessary because numpy can't handle non-hyper-rectangular arrays
+    # and you're looping over them anyway so 
+    # [layer.weights for layer in self.layers]
+    # is fine. Actually I think
+    # return (layer.weights for layer in self.layers)
+    # does it. As long as you remember that you can only use it once
+    # because it doesn't create a separate list in memory but iterates along the way.
+    # But then you have to modify the backpropagation.
     def _get_weights(self):
         result=[]
         for item in self.layers:
@@ -74,7 +101,7 @@ class Net(object):
 
     def derivative(self, input):
         result=[]
-        for k in range(0, len(self.form)):
+        for k in range(self.depth):
             result.append(list(self.layers[k].derivative(self.kth_sum(input,k))))
         return np.array(result)
         #OK
@@ -88,7 +115,7 @@ class Net(object):
 
     def kth_output(self, input, k):
         result=input
-        for i in range(0, k+1):
+        for i in range(k+1):
             result=self.layers[i].output(result)
         return result
         #OK
@@ -109,11 +136,11 @@ class Net(object):
         result=0.0
         derivative=self.derivative(input)
         output=self.output(input)
-        if k==len(self.form)-1:
+        if k==self.depth-1:
             result = (output[row]-dao_output[row])*derivative[k][row]
             return result
         else:
-            for l in range(0, self.form[k+1]):
+            for l in range(self.form[k+1]):
                 result+=self.layers[k+1].weights[l][row]*derivative[k][row]*self._delta(k+1,l, input, dao_output)
             return result
         #OK, allthough some intermediate outputs are calculated many times I think
@@ -145,19 +172,19 @@ class Net(object):
     def back_propagation(self,learning,old_weights,old_biases):
         momentum=learning/5.0   #Tunable
         weight=change=0.0
-        prev_layer=self.form[len(self.form)-2]
-        for k in range(len(self.form)-1,-1,-1):
+        prev_layer=self.form[self.depth-2]
+        for k in range(self.depth-1,-1,-1):
             if k!=0:
                 prev_layer=self.form[k-1]
-            for row in range(0, self.form[k]):
-                for column in range(0, prev_layer):
+            for row in range(self.form[k]):
+                for column in range(prev_layer):
                     weight=self.layers[k].weights[row][column]
                     change=learning*self._stochastic_derivative(k, row, column)
                     if abs(weight-change)<10:
                         self.layers[k].weights[row][column]-=change*(1-momentum)+(weight-old_weights[k][row][column])*momentum
                 bias=self.layers[k].biases[row]
                 change=learning*self._stochastic_delta(k, row)
-                if abs(bias-change)<10 and k!=len(self.form)-1:
+                if abs(bias-change)<10 and k!=self.depth-1:
                     self.layers[k].biases[row]-=change*(1-momentum)+(bias-old_biases[k][row])*momentum
         #OK #Momentum added!!!
 
@@ -206,9 +233,9 @@ class Net(object):
 
 if __name__=='__main__':
 
-    netA=Net([3,3])
-    input=[1,0]
-    dao_output=[1]
+    from DAO import DAO as xorDAO
+
+    netA=Net([2,5,1], xorDAO())
 
     '''
     print(netA._stochastic_error())
