@@ -10,8 +10,6 @@ from DAO import DAO
 from FinanceDAO import FinanceDAO
 np.random.seed(int(time.time()))
 
-
-
 class Net(object):
 
     def __init__(self, form, dao):
@@ -114,13 +112,8 @@ class Net(object):
         #OK, allthough some intermediate outputs are calculated many times I think
 
     def _stochastic_delta(self, k, row):
-<<<<<<< HEAD
         delta = 0
         for item in self.dao.data:
-=======
-        delta=0
-        for item in self.dao.iter():
->>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
             delta+=self._delta(k,row,item[0],item[1])
         return delta/self.dao.size
         #OK
@@ -130,19 +123,14 @@ class Net(object):
 
     def _stochastic_derivative(self, k, row, column):
         derivative=0
-        for item in self.dao.iter():
+        for item in self.dao.data:
             derivative+=self.weights_derivative(k,row,column,item[0],item[1])
         return derivative/self.dao.size
         #OK
 
     def _stochastic_error(self):
-<<<<<<< HEAD
         error = 0.0
         for item in self.dao.data:
-=======
-        error=0.0
-        for item in self.dao.iter():
->>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
             error+=self.error(item[0],item[1])
         return error/self.dao.size
         #OK
@@ -217,18 +205,7 @@ if __name__=='__main__':
     from xor_dao import XorDAO
     netA=Net([2,5,1], XorDAO())
 
-<<<<<<< HEAD
-    netA=Net([2,2,1], xorDAO())
-
-
-    #print(netA._get_weights())
-=======
-    # from yahoo_dao import SingleClosingSeries
-    # netA = Net([2, 5, 1], SingleClosingSeries('AAPL'))
->>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
-
     print(netA._stochastic_error())
-
     #print(netA.output(np.array([0,0])))
     #print(netA.output(np.array([0,1])))
     #print(netA.output(np.array([1,0])))
@@ -258,78 +235,11 @@ if __name__=='__main__':
     print(netA._stochastic_error())
     '''
 
-    #cameco = FinanceDAO('CCJ')
     financeNet = Net([4,4,1],FinanceDAO('CCJ'))
-    #netA.learn_by_randomisation(50)
-
     print(financeNet._stochastic_error())
-
-
     financeNet.learn_by_back_propagation(500,0.4)
-        #netA.learn_by_back_propagation(100,0.9*np.exp(-i*0.05))
-        #print(netA._stochastic_error())
-
-
-        #print(netA._stochastic_error())
-        #print(netA._get_weights())
 
     #print(netA._stochastic_derivatives())
     #print(netA._stochastic_derivative(1,0,0))
     print(financeNet._get_weights())
     print(financeNet._get_biases())
-
-
-    '''
-    print(netA._stochastic_error())
-
-    netA.learn_by_exponential_back_propagation(200,2,-0.001)
-    print(netA._stochastic_error())
-    '''
-    '''
-    netA.set_weights(np.array([[[-0.79119655, -0.79119641],[-0.79119638, -0.79119658]],[[ 1.06612512,  0.77319679]]]))
-
-    for i in range(10):
-        print(netA._get_weights())
-        print(netA._stochastic_error())
-        netA.learn_by_stochastic_back_propagation(1000,0.7)
-        print(netA._stochastic_error())
-        print(netA._get_weights())
-    '''
-
-    '''
-    def _randomize_old(self):
-        prevlayer=self.form[0]
-        temp_matrix=[]
-        temp_list=[]
-        biases=[]
-
-        for idx, layer in enumerate(self.layers):
-            for row in range(self.form[idx]):
-                for column in range(prevlayer):
-                    temp_list.append(random.uniform(-2,2))
-                temp_matrix.append(temp_list)
-                if(idx!=self.depth-1):
-                    biases.append(random.uniform(-2,2))
-                temp_list=[]
-            layer.weights = np.array(temp_matrix)
-            if(idx!=self.depth-1):
-                layer.biases = np.array(biases)
-            else:
-                layer.biases = np.zeros(self.form[idx])
-            temp_matrix=[]
-            biases=[]
-            prevlayer=self.form[idx]
-        #OK... I don't know how to make this any shorter, sorry guys
-        #Randomizes weights uniformally in [-2,2]
-
-    # You could do this with
-    # return np.array([layer.weights for layer in self.layers])
-    # but it's unnecessary because numpy can't handle non-hyper-rectangular arrays
-    # and you're looping over them anyway so
-    # [layer.weights for layer in self.layers]
-    # is fine. Actually I think
-    # return (layer.weights for layer in self.layers)
-    # does it. As long as you remember that you can only use it once
-    # because it doesn't create a separate list in memory but iterates along the way.
-    # But then you have to modify the backpropagation.
-    '''

@@ -4,7 +4,6 @@
 """
 
 import time
-from yahoo_finance import Share
 import random
 import scipy
 import numpy as np

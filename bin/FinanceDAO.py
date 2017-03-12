@@ -17,11 +17,6 @@ class FinanceDAO(object):
         self.data=[]
         self._instrument = instrument
         self.service_all_data(4)
-        #print('Input size: ',self.input_size)
-        #print('Size: ',self.size)
-        #self.size=len(self.data)
-        #self.input_size = len(data[0][0])
-
 
     @property
     def size(self):
@@ -30,8 +25,6 @@ class FinanceDAO(object):
     @property
     def input_size(self):
         return len(self.data[0][0])
-
-
 
     @property
     def instrument(self):
@@ -78,7 +71,7 @@ class FinanceDAO(object):
         delta = max_price-min_price
         #print('Mean, variance, price_delta: ', mean, variance, delta)
         input_ = map(lambda item: (item-mean)/delta, price_vector)
-        output_ = np.array(map(lambda item: (item-mean)/delta, price_vector[1])) #Change this into a map if needed
+        output_ = np.array(map(lambda item: (item-mean)/delta, price_vector[1])) 
         #print('Mean, variance, price_delta: ', mean, variance, delta)
         return map(list ,zip(input_, [output_]))[0]
         #OK!!
@@ -109,18 +102,6 @@ if __name__=='__main__':
     print(dogefund.input_size)
     print((dogefund.data[0][1]))
 
-
-#print(dao.get_all_data())
-#print(dao.service_closing_price())
-
-'''
-    def one_data_point(self, i):
-        return np.array(self.data[i])
-
-    def random_data_point(self):
-        number=random.randint(0,len(self.data)-1)
-        return np.array(self.data[number])
-'''
 '''
 @property
 def data(self):

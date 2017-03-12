@@ -76,9 +76,6 @@ if __name__=='__main__':
     print(layer._activation(layer._sum(np.array([0,0,1]))))
     print(layer.derivative(layer._sum([0,0,1])))
 
-
-
-
     print(layer.weights)
     #Uses property!
 
@@ -92,13 +89,3 @@ if __name__=='__main__':
     print(layer.derivative(layer._sum(np.array([1,1,1]))))
 
     print(layer.derivative(layer._sum([1,1,1])))
-
-
-
-'''
-result = []
-for i in range(0, self._length):
-    result.append(np.tanh(sum_[i]))
-    #result.append(1.0/(1.0+np.exp(-sum_[i])))
-return np.array(result)
-'''
