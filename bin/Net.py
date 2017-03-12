@@ -114,8 +114,13 @@ class Net(object):
         #OK, allthough some intermediate outputs are calculated many times I think
 
     def _stochastic_delta(self, k, row):
+<<<<<<< HEAD
         delta = 0
         for item in self.dao.data:
+=======
+        delta=0
+        for item in self.dao.iter():
+>>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
             delta+=self._delta(k,row,item[0],item[1])
         return delta/self.dao.size
         #OK
@@ -125,14 +130,19 @@ class Net(object):
 
     def _stochastic_derivative(self, k, row, column):
         derivative=0
-        for item in self.dao.data:
+        for item in self.dao.iter():
             derivative+=self.weights_derivative(k,row,column,item[0],item[1])
         return derivative/self.dao.size
         #OK
 
     def _stochastic_error(self):
+<<<<<<< HEAD
         error = 0.0
         for item in self.dao.data:
+=======
+        error=0.0
+        for item in self.dao.iter():
+>>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
             error+=self.error(item[0],item[1])
         return error/self.dao.size
         #OK
@@ -204,12 +214,18 @@ class Net(object):
 
 if __name__=='__main__':
 
-    from DAO import DAO as xorDAO
+    from xor_dao import XorDAO
+    netA=Net([2,5,1], XorDAO())
 
+<<<<<<< HEAD
     netA=Net([2,2,1], xorDAO())
 
 
     #print(netA._get_weights())
+=======
+    # from yahoo_dao import SingleClosingSeries
+    # netA = Net([2, 5, 1], SingleClosingSeries('AAPL'))
+>>>>>>> 3e4ba6c70ba0242f771c6b9184c2359be68c6c4f
 
     print(netA._stochastic_error())
 
