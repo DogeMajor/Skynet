@@ -1,58 +1,70 @@
 #!/usr/bin/env python
-
+import time
 import scipy
 import numpy as np
-
+import math
 #Every ROW of the matrix corresponds to the weights of the specific neuron!
+
+def timer(function):
+
+    def timer_wrapper(*args, **kwargs):
+        t0 = time.time()
+        result = function(*args,**kwargs)
+        delta_t = time.time()-t0
+        print('Function {} took {} seconds to run.'.format(function.__name__, delta_t))
+        return result
+    return timer_wrapper
+    #Defines a timer decorator
 
 class Layer(object):
 
     def __init__(self, length, biases, weights):
-        self.length=length
-        self.biases=biases
-        self.weights=weights
+        self._length = length
+        self._biases = biases
+        self._weights = weights
 
-    def set_weights(self, weights):
-        self.weights=np.array(weights)
-        #Every ROW of the matrix corresponds to the weights of the specific neuron!
+    @property
+    def weights(self):
+        return self._weights
 
-    def set_biases(self, biases):
-        self.biases=np.array(biases)
+    @weights.setter
+    def weights(self, values):
+        self._weights = values
 
-    def _get_weights(self):
-        return self.weights
+    @property
+    def biases(self):
+        return self._biases
 
-    def _get_biases(self):
-        return self.biases
+    @biases.setter
+    def biases(self, values):
+        self._biases = values
 
     def _sum(self, input_):
-        sum_ = np.dot(self.weights, input_) #Soooo much easier than dealing with neurons
-        sum_ = np.add(sum_,self.biases)
+        sum_ = np.dot(self._weights, input_) #Soooo much easier than dealing with neurons
+        sum_ = np.add(sum_,self._biases)
         return sum_
 
     def _activation(self, sum_):
-        result = []
-        for i in range(0, self.length):
-            result.append(np.tanh(sum_[i]))
-            #result.append(1.0/(1.0+np.exp(-sum_[i])))
-        return np.array(result)
+        return 1.7159*np.tanh(0.666*sum_)
+        #return result
+    #result = (1.0/(1.0+np.exp(-sum_)))
 
     def derivative(self, sum_):
-        result = []
-        for i in range(0, self.length):
-            result.append(1-(np.tanh(sum_[i]))**2)
-            #result.append(np.exp(sum_[i])/(1.0+np.exp(sum_[i]))**2)
-        return np.array(result)
+        return 1.1427894*(1-(np.tanh(0.666*sum_))**2)
+        #return result
+    #result. = np.exp(sum_)/(1.0+np.exp(sum_))**2)
 
     def output(self, input_):
-        return self._activation(self._sum(input_))
+        temp = self._sum(input_)
+        return self._activation(temp)
 
 if __name__=='__main__':
-    '''
-    layer=Layer(3,[0,0,0],[])#Bias is zero in order to make checking matrix ops. easier
+
+    layer = Layer(3,[0,0,0],[])#Biases are all zero in order to make checking matrix ops. easier
 
 
-    layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
+    layer.weights = np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
+    #Uses property.setter!!!
 
 
     print(layer._sum(np.array([0,0,1])))
@@ -66,12 +78,9 @@ if __name__=='__main__':
 
 
 
-    A=np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
-    B=np.array([1,0,0])
-    print(np.dot(A,B))
-    print(A)
 
-    print(layer.get_weights())
+    print(layer.weights)
+    #Uses property!
 
     print(layer.output(np.array([0,0,1])))
 
@@ -83,4 +92,13 @@ if __name__=='__main__':
     print(layer.derivative(layer._sum(np.array([1,1,1]))))
 
     print(layer.derivative(layer._sum([1,1,1])))
-    '''
+
+
+
+'''
+result = []
+for i in range(0, self._length):
+    result.append(np.tanh(sum_[i]))
+    #result.append(1.0/(1.0+np.exp(-sum_[i])))
+return np.array(result)
+'''

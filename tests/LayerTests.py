@@ -13,7 +13,7 @@ class LayerTests(unittest.TestCase):
 
     def setUp(self):
         self.layer=Layer.Layer(3, 0, [])
-        self.layer.set_weights(np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]]))
+        self.layer.weights = np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
 
     def test_activation(self):
         self.assertAlmostEqual([0.2913126124515909, 0.5370495669980353, 0.71629787019902447],
