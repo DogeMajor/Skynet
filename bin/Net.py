@@ -8,6 +8,7 @@ from numpy import linalg as la
 import Layer
 from DAO import DAO
 from FinanceDAO import FinanceDAO
+from FinanceService import FinanceService
 np.random.seed(int(time.time()))
 
 class Net(object):
@@ -41,12 +42,8 @@ class Net(object):
     def _randomize(self):
         # fancy iterating
         for i, (layer, size) in enumerate(zip(self.layers, self.form)):
-            # weights
-            # I'm not actually sure if this is what you had in mind.
-            # The old randomize-function uses the first layer shape twice.
             prevsize = self.form[i-1] if i>0 else self.dao.input_size
             layer.weights = np.random.uniform(-2, 2, (size, prevsize))
-            # biases
             not_output_layer = i != self.depth-1
             bias = np.random.uniform(-2, 2, size) if not_output_layer else np.zeros(size)
             layer.biases = bias
@@ -234,8 +231,8 @@ if __name__=='__main__':
     print(netA.output(np.array([1,1])))
     print(netA._stochastic_error())
     '''
-
-    financeNet = Net([4,4,1],FinanceDAO('CCJ'))
+    ccj = FinanceService('CCJ',4)
+    financeNet = Net([4,4,1],ccj)
     print(financeNet._stochastic_error())
     financeNet.learn_by_back_propagation(500,0.4)
 
@@ -243,3 +240,5 @@ if __name__=='__main__':
     #print(netA._stochastic_derivative(1,0,0))
     print(financeNet._get_weights())
     print(financeNet._get_biases())
+    normed_output = financeNet.output([0.38612565,  0.26570681, -0.03795812, -0.61387435])
+    print(ccj.real_price(normed_output, [12,2]))
