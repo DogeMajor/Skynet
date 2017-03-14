@@ -8,7 +8,7 @@ import random
 import scipy
 import numpy as np
 from numpy import linalg as la
-from dao import DAO
+from dao_interface import DAO
 
 # random.seed(time)
 
@@ -31,7 +31,7 @@ class XorDAO(DAO):
         return np.array(self.data[i])
 
     def data_dyad(self):
-        i = random.randint(0,len(self.data)-1)
+        i = random.randint(0, len(self.data)-1)
         return np.asarray(self.data[i])
 
     def data_monad(self):

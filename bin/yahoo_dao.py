@@ -33,11 +33,12 @@ class SingleClosingSeries(DAO):
         input_ = series.iloc[i-insize:i].values
         return input_
 
-    def iter(self):
+    @property
+    def data(self):
         insize = self.input_size
         series = self._data
         for i in range(insize, self.size-1):
             input_ = series.iloc[i-insize:i].values
             output = series.iloc[i:i+1].values
             yield input_, output
-            
+        
