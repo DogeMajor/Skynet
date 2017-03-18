@@ -3,21 +3,21 @@ import numpy as np
 from numpy import tanh, exp, empty, zeros, zeros_like, empty_like, dot, asarray, copy, einsum
 from numpy.random import rand, seed
 
-seed(123)
+# seed(123)
 
-# K, dK = lambda x: 1/(1 + exp(-x)), lambda x: K(x)*(1 - K(x))
-K, dK = lambda x: 1.1427894*(1-(tanh(0.666*x))**2), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
+# K, dK = lambda x: 1/(1 + exp(-x)), lambda x: exp(-x)/(1 + exp(-x))**2
+K, dK = lambda x: 1.7159*np.tanh(0.666*x), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
 
 obs = [([0.0, 0.0], [.0]), ([0.0, 1.0], [1.0]), ([1.0, 0.0], [1.0]), ([1.0, 1.0], [.0]),]
-# obs = obs*100
+obs = obs*1000
 BATCHSIZE = len(obs)
 INSIZE = 2
 OUTSIZE = 1
 y = asarray([yo for yi, yo in obs]).reshape((BATCHSIZE, 1, 1))
 
-lrate = .004
-mom = .0
-reg = 1.e-12
+lrate = .2
+mom = .4
+reg = 1.e-10
 # reg = 0.
 
 class ChunkNet(object):
@@ -33,9 +33,9 @@ class ChunkNet(object):
         # Data arrays
         self.x = [empty((BATCHSIZE, size, 1)) for size in self.form]
         # Data arrays but unactivated
-        self.s = [empty_like(xi) for xi in self.x[1:]]
+        self.s = [None] + [empty_like(xi) for xi in self.x[1:]]
         # Change of data arrays
-        self.ds = [empty_like(si) for si in self.s]
+        self.ds = [None] + [empty_like(xi) for xi in self.x[1:]]
         # Uniform random for weight initialization
         unif_rand = lambda shape: 2*(2*rand(*shape) - 1)
         # Weights
@@ -44,25 +44,36 @@ class ChunkNet(object):
         self.dw = [zeros_like(wi) for wi in self.w]
         # First data array equals input observations
         self.x[0] = asarray([yi for yi, yo in obs]).reshape((BATCHSIZE, 2, 1))
-        
+
     def activate(self):
         s, x, w = self.s, self.x, self.w
         for i in range(1, self.depth):
-            s[i-1][:] = einsum('dij,djk->dik', w[i-1], x[i-1])
-            x[i][:] = K(s[i-1])
+            s[i][:] = einsum('dij,djk->dik', w[i-1], x[i-1])
+            x[i][:] = K(s[i])
 
     def weight_gradient(self):
-        s, x, w, ds, dw = self.s, self.x, self.w, self.ds, self.dw
-        # Last layer is slightly special
-        error = y - x[-1]
-        ds[-1] = dK(s[-1])*error
-        dw[-1][:] = ds[-1]*x[-2].swapaxes(-1, -2)
-        # Backpropagate gradients
-        for i in range(self.depth-2, 0, -1):
-            wi = i - 1 # weight index
-            ds[wi] = ds[wi+1]*w[wi+1].swapaxes(-1, -2)*dK(s[wi])
-            dw[wi] = ds[wi]*x[i-1].swapaxes(-1, -2)
-        return dw
+        s, x, W, dEds, dEdW = self.s, self.x, self.w, self.ds, self.dw
+
+        # error = y - x[-1]
+        # ds[-1] = dK(s[-1])*error
+        # dEdW[-1][:] = ds[-1]*x[-2].swapaxes(-1, -2)
+
+        # Output layer is special
+        error = x[-1] - y
+        dEds[-1] = error*dK(s[-1])
+        dEdW[-1] = dEds[-1]*x[-2].swapaxes(-1, -2)
+        # Backpropagate gradients over the rest of the weight layers.
+        # For 1 hidden layer, this loop is just i=0
+        for i in range(self.depth-3, -1, -1):
+
+            # ds[i+1] = ds[i+2]*W[i+1].swapaxes(-1, -2)*dK(s[i+1])
+            # dEdW[i] = ds[i+1]*x[i].swapaxes(-1, -2)
+
+            dEds[i+1] = einsum('dnm,dni->di', dEds[i+2], W[i+1])[..., None]*dK(s[i+1])
+            dEdW[i] = dEds[i+1]*x[i].swapaxes(-1, -2)
+            # Regularization term gradient
+            dEdW[i] += W[i]**3*reg
+        return dEdW
 
 class Descender(object):
 
@@ -76,30 +87,31 @@ class Descender(object):
         # Activate net
         self.net.activate()
         # Backpropagate gradients
-        dw = self.net.weight_gradient()
+        dEdW = self.net.weight_gradient()
         # Update weights
         for wi in range(net.depth-1):
-            # Weight change
-            delta_wi = lrate*dw[wi]
-            # Save weight change for next iteration momentum
-            self.delta_prev[wi][:] = w[wi]
+            # Weight change. Doesn't include momentum
+            delta_wi = -lrate*dEdW[wi]
             # Descend step
             w[wi][:] += delta_wi + mom*self.delta_prev[wi]
+            # Save weight change for next iteration momentum
+            self.delta_prev[wi][:] = delta_wi
         # Squared errors
         sqe = (y - x[-1])**2
         return sqe
 
     def descend(self, N):
         for i in range(N):
-            chunk_errors = [self.descend_batch() for _ in range(30)]
+            chunk_errors = [self.descend_batch() for _ in range(1)]
             sqe = np.mean(chunk_errors)
+            print(i, sqe)
             yield i, sqe
 
 if __name__=='__main__':
 
-    net = ChunkNet([3])
+    net = ChunkNet([3, 50, 3])
     desc = Descender(net)
-    idx, sqes = zip(*desc.descend(300))
+    idx, sqes = zip(*desc.descend(100))
 
     from pylab import *
     ion()
