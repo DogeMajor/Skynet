@@ -8,25 +8,25 @@ from numpy.random import rand, seed
 # K, dK = lambda x: 1/(1 + exp(-x)), lambda x: exp(-x)/(1 + exp(-x))**2
 K, dK = lambda x: 1.7159*np.tanh(0.666*x), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
 
-obs = [([0.0, 0.0], [.0]), ([0.0, 1.0], [1.0]), ([1.0, 0.0], [1.0]), ([1.0, 1.0], [.0]),]
+obs = [([0.0, 0.0], [-1.]), ([0.0, 1.0], [1.0]), ([1.0, 0.0], [1.0]), ([1.0, 1.0], [-1.]),]
 obs = obs*1000
 BATCHSIZE = len(obs)
 INSIZE = 2
 OUTSIZE = 1
-y = asarray([yo for yi, yo in obs]).reshape((BATCHSIZE, 1, 1))
+OBSERVATIONS = asarray([yo for yi, yo in obs]).reshape((BATCHSIZE, 1, 1))
 
-lrate = .2
-mom = .4
-reg = 1.e-4
-# reg = 0.
+LRATE = .2
+MOMENTUM = .4
+REGULARIZATION_PARAMETER = 1.e-4
+# REGULARIZATION_PARAMETER = 0.
 
 class ChunkNet(object):
 
     """
     Data attributes:
-    W       list of weight matrices
-    x       list of unactivated data vectors (vertical)
-    ax      list of activated data vectors (vertical)
+    W       list of weight arrays (obs-size, next-layer-size, layer-size)
+    x       list of unactivated data arrays (obs-size, layer-size, 1)
+    ax      list of activated data arrays (obs-size, layer-size, 1)
     """
 
     def __init__(self, hidden_sizes, dao=None):
@@ -64,8 +64,8 @@ class ChunkNet(object):
 
         # Output layer first.
         # Observation error
-        error = ax[-1] - y
-        # E for energy = cost function, d for derivative
+        error = ax[-1] - OBSERVATIONS
+        # E for energy = cost function = log-inv-prob, d for derivative
         dEdx[-1] = error*dK(x[-1])
         dEdW[-1] = dEdx[-1]*ax[-2].swapaxes(-1, -2)
 
@@ -73,14 +73,14 @@ class ChunkNet(object):
         # For 1 hidden layer, this loop is just i=0
         for i in range(self.depth-3, -1, -1):
             # Gradient wrt. unactivated data.
-            # The sum corresponds to contributions by (unactivated) i+2 data layer.
+            # The sum corresponds to contributions by (unactivated) i+2 data layer and i+1 weight layer.
             # To match dimensions, shape of the sum expression is spread.
             # Each activation gradient is multiplied elementwise.
             dEdx[i+1] = einsum('dnm,dni->di', dEdx[i+2], W[i+1])[..., None]*dK(x[i+1])
             # Gradient wrt. weight matrix
             dEdW[i] = dEdx[i+1]*ax[i].swapaxes(-1, -2)
             # Regularization term gradient
-            dEdW[i] += W[i]**1*reg
+            dEdW[i] += W[i]**1*REGULARIZATION_PARAMETER
 
         return dEdW
 
@@ -100,13 +100,13 @@ class Descender(object):
         # Update weights
         for wi in range(net.depth-1):
             # Weight increment. Doesn't include momentum
-            delta_wi = -lrate*dEdW[wi]
+            delta_wi = -LRATE*dEdW[wi]
             # Descend step
-            W[wi][:] += delta_wi + mom*self.delta_prev[wi]
+            W[wi][:] += delta_wi + MOMENTUM*self.delta_prev[wi]
             # Save weight increment for the next step
             self.delta_prev[wi][:] = delta_wi
         # Squared errors
-        sqerrors = (y - ax[-1])**2
+        sqerrors = (OBSERVATIONS - ax[-1])**2
         return sqerrors
 
     def descend(self, N):
@@ -118,7 +118,7 @@ class Descender(object):
 
 if __name__=='__main__':
 
-    net = ChunkNet([3, 50, 3])
+    net = ChunkNet([5])
     desc = Descender(net)
     idx, sqes = zip(*desc.descend(100))
 
