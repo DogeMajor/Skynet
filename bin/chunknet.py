@@ -5,11 +5,18 @@ from numpy.random import rand, seed
 
 # seed(123)
 
+try:
+    from numexpr import evaluate
+except ImportError:
+    K, dK = lambda x: 1.7159*tanh(0.666*x), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
+else:
+    K, dK = lambda x: evaluate('1.7159*tanh(0.666*x)'), lambda x: evaluate('1.1427894*(1-(tanh(0.666*x))**2)')
+
 # K, dK = lambda x: 1/(1 + exp(-x)), lambda x: exp(-x)/(1 + exp(-x))**2
-K, dK = lambda x: 1.7159*np.tanh(0.666*x), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
+# K, dK = lambda x: 1.7159*tanh(0.666*x), lambda x: 1.1427894*(1-(tanh(0.666*x))**2)
 
 obs = [([0.0, 0.0], [-1.]), ([0.0, 1.0], [1.0]), ([1.0, 0.0], [1.0]), ([1.0, 1.0], [-1.]),]
-obs = obs*1000
+obs = obs*100000
 BATCHSIZE = len(obs)
 INSIZE = 2
 OUTSIZE = 1
@@ -76,11 +83,11 @@ class ChunkNet(object):
             # The sum corresponds to contributions by (unactivated) i+2 data layer and i+1 weight layer.
             # To match dimensions, shape of the sum expression is spread.
             # Each activation gradient is multiplied elementwise.
-            dEdx[i+1] = einsum('dnm,dni->di', dEdx[i+2], W[i+1])[..., None]*dK(x[i+1])
+            dEdx[i+1][:] = einsum('dnm,dni->di', dEdx[i+2], W[i+1])[..., None]*dK(x[i+1])
             # Gradient wrt. weight matrix
-            dEdW[i] = dEdx[i+1]*ax[i].swapaxes(-1, -2)
+            dEdW[i][:] = dEdx[i+1]*ax[i].swapaxes(-1, -2)
             # Regularization term gradient
-            dEdW[i] += W[i]**1*REGULARIZATION_PARAMETER
+            dEdW[i][:] += W[i]**1*REGULARIZATION_PARAMETER
 
         return dEdW
 
@@ -98,7 +105,7 @@ class Descender(object):
         # Energy gradient matrices
         dEdW = self.net.weight_gradient()
         # Update weights
-        for wi in range(net.depth-1):
+        for wi in range(self.net.depth-1):
             # Weight increment. Doesn't include momentum
             delta_wi = -LRATE*dEdW[wi]
             # Descend step
@@ -113,16 +120,25 @@ class Descender(object):
         for i in range(N):
             chunk_errors = [self.descend_batch() for _ in range(1)]
             sqerror = np.mean(chunk_errors)
-            print(i, sqerror)
+            # print(i, sqerror)
             yield i, sqerror
 
+def descend():
+    net = ChunkNet([5])
+    desc = Descender(net)
+    idx, sqes = zip(*desc.descend(30))
+
 if __name__=='__main__':
+
+    # pass
+
+    # timeit descend()
 
     net = ChunkNet([5])
     desc = Descender(net)
     idx, sqes = zip(*desc.descend(100))
 
-    from pylab import *
-    ion()
-    plot(idx, sqes)
-    ylim([0, sqes[0]*1.05])
+    # from pylab import *
+    # ion()
+    # plot(idx, sqes)
+    # ylim([0, sqes[0]*1.05])
