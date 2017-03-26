@@ -6,39 +6,83 @@ import scipy
 import numpy as np
 from pandas_datareader import get_data_yahoo
 from dao import DAO
-
+import datetime
+import pandas_datareader.data as web
 # random.seed(time)
 
 class SingleClosingSeries(DAO):
 
-    def __init__(self, ticker, insize=50):
-        series = get_data_yahoo(ticker)['Close']
+    def __init__(self, ticker, start, end, input_size, ):
+        series = get_data_yahoo(ticker,start, end )['Close']
         self._data = series.diff()
-        self.size = len(series)-insize
-        self.input_size = insize
+        self._data = self._data.dropna()#drops the NaN's
+        self.size = len(series)-input_size
+        self.input_size = input_size
         self.output_size = 1
+        self._stats = (self._data.mean(), self._data.var(), self._data.max(), self._data.min())
+
+    #Inverts the norming
+    def inv_transform(self, data_):
+        for point in data_:
+            yield 4.0*point*self._stats[1] + self._stats[0]
+
+    def _norm_data(self):
+        data = self._data
+        mean = np.mean(data)
+        max_change = np.max(data)
+        min_change = np.min(data)
+        variance = np.var(data)
+        #print(mean, variance, max_change, min_change)
+        #self._data = (data-data.mean())/(data.max() - data.min())
+        self._data = (data-data.mean())/(4*data.var())
 
     def data_dyad(self):
-        insize = self.input_size
+        input_size = self.input_size
         series = self._data
-        i = random.randint(insize, series.size-1)
-        input_ = series.iloc[i-insize:i].values
-        output = series.iloc[i:i+1].values
-        return input_, output
+        i = random.randint(input_size, series.size-1)
+        input_ = series.iloc[i-input_size:i].values
+        output_ = series.iloc[i:i+1].values
+        return input_, output_
 
     def data_monad(self):
-        insize = self.input_size
+        input_size = self.input_size
         series = self._data
-        i = random.randint(insize, series.size)
-        input_ = series.iloc[i-insize:i].values
+        i = random.randint(input_size, series.size)
+        input_ = series.iloc[i-input_size:i].values
+        return input_
+
+    def input_data(self, start, end):
+        input_size = self.input_size
+        series = self._data[start:end]
+        input_ = series.values
         return input_
 
     @property
     def data(self):
-        insize = self.input_size
+        input_size = self.input_size
         series = self._data
-        for i in range(insize, self.size-1):
-            input_ = series.iloc[i-insize:i].values
-            output = series.iloc[i:i+1].values
-            yield input_, output
-        
+        for i in range(input_size, self.size-1):
+            input_ = series.iloc[i-input_size:i].values
+            output_ = series.iloc[i:i+1].values
+            yield np.array(input_), np.array(output_)
+
+if __name__=='__main__':
+
+    ccj = SingleClosingSeries('CCJ','01/01/2016','01/01/2017',20)
+    data = list(ccj.data)[0:2]
+    print(data)
+    print(len(data[0]))
+    print(ccj.size)
+    print(ccj.input_size)
+    ccj._norm_data()
+    data = list(ccj.data)[0:2]
+    #print(data)
+    #print(len(data[0]))
+    print(type(list(ccj.data)[0]))
+    #print(len(ccj._data))
+
+    print(list(ccj.inv_transform([1,-1])))
+    #print(ccj.data_monad())
+    dada = ccj.input_data('01/01/2016','02/02/2016')
+    print(dada)
+    print(len(dada))

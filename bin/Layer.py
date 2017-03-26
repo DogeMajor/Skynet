@@ -49,7 +49,7 @@ class Layer(object):
         #return result
     #result = (1.0/(1.0+np.exp(-sum_)))
 
-    def derivative(self, sum_):
+    def _derivative(self, sum_):
         return 1.1427894*(1-(np.tanh(0.666*sum_))**2)
         #return result
     #result. = np.exp(sum_)/(1.0+np.exp(sum_))**2)
