@@ -15,7 +15,7 @@ class Stock(object):
     '''Creates a three-layered net based on the data. Trains the network to
     predict stock price change from 20 days prior price information. Predicts
     the price change for tomorrow. This program is meant for entertainment
-    and education purposes only and should be considered as advice to make investments.
+    and education purposes only and should not be considered as advice to make investments.
     Before making any financial decisions, always consult your local Dogecoin
     broker first.'''
 
