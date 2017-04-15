@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append('../') #enables importing Layer -module
+sys.path.append('../') #enables importing layer -module
 
 import unittest
 import numpy as np
-from Skynet.bin import Layer
+from Skynet.bin import layer
 #Achtung!!! Assert(Almost)Equal does not know how to compare np.arrays,
 #you have to convert them into lists first
 ## Every time almosEqual fails the error messages will claim they don't support the operation for lists
@@ -14,10 +14,10 @@ from Skynet.bin import Layer
 class LayerTests(unittest.TestCase):
 
     def setUp(self):
-        self.hlayer=Layer.HiddenLayer(3, np.array([0]), None)
+        self.hlayer=layer.HiddenLayer(3, np.array([0]), None)
         self.hlayer.weights = np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
-        self.ilayer=Layer.InputLayer(3)
-        self.olayer=Layer.OutputLayer(3, np.array([0]), None)
+        self.ilayer=layer.InputLayer(3)
+        self.olayer=layer.OutputLayer(3, np.array([0]), None)
         self.olayer.weights = np.array([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
 
     def test_activation(self):

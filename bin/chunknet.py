@@ -2,6 +2,7 @@
 import numpy as np
 from numpy import tanh, exp, empty, zeros, zeros_like, empty_like, dot, asarray, copy, einsum
 from numpy.random import rand, seed
+from Layer import timer
 
 # seed(123)
 
@@ -115,7 +116,7 @@ class Descender(object):
         # Squared errors
         sqerrors = (OBSERVATIONS - ax[-1])**2
         return sqerrors
-
+    @timer
     def descend(self, N):
         for i in range(N):
             chunk_errors = [self.descend_batch() for _ in range(1)]
@@ -132,13 +133,13 @@ if __name__=='__main__':
 
     # pass
 
-    # timeit descend()
+    #timeit descend()
 
     net = ChunkNet([5])
     desc = Descender(net)
-    idx, sqes = zip(*desc.descend(100))
+    idx, sqes = zip(*desc.descend(300))
 
-    # from pylab import *
-    # ion()
-    # plot(idx, sqes)
-    # ylim([0, sqes[0]*1.05])
+    from pylab import *
+    ion()
+    plot(idx, sqes)
+    ylim([0, sqes[0]*1.05])

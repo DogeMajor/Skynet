@@ -1,20 +1,17 @@
 #!/usr/bin/env python
-
-# import time
 import random
 import scipy
 import numpy as np
 from pandas_datareader import get_data_yahoo
 from dao import DAO
 import datetime
-#import pandas_datareader.data as web
-# random.seed(time)
 
 class SingleClosingSeries(DAO):
 
     def __init__(self, ticker, start, end, input_size):
         series = get_data_yahoo(ticker,start, end )['Close']
         self._data = series.diff()
+        #print(self._data)
         self._data = self._data.dropna()#drops the NaN's
         self.size = len(series)-input_size
         self.input_size = input_size
@@ -82,31 +79,4 @@ class SingleClosingSeries(DAO):
             yield np.array(input_), np.array(output_)
 
 if __name__=='__main__':
-
-    ccj = SingleClosingSeries('CCJ','01/01/2016','01/01/2017',20)
-    '''
-    data = list(ccj.data)[0:2]
-    print(data)
-    print(len(data[0]))
-    print(ccj.size)
-    print(ccj.input_size)
-    ccj._norm_data()
-    data = list(ccj.data)[0:2]
-    #print(data)
-    #print(len(data[0]))
-    print(type(list(ccj.data)[0]))
-    #print(len(ccj._data))
-    '''
-    #print(list(ccj.inv_transform([1,-1])))
-    #print(ccj.data_monad())
-    dada = ccj.input_data('01/01/2016','02/02/2016')
-    print(dada)
-    #print(len(dada))
-    #print()
-    ccj._norm_data()
-    #output = ccj.random_data_dyads(10)
-    #print(list(output))
-    print(list(ccj.data))
-    last_20 = ccj.latest_data()
-    print(last_20)
-    print(len(last_20))
+    pass
